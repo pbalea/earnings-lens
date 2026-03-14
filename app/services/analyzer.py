@@ -1,4 +1,6 @@
 import json
+import re
+import sys
 from typing import Any
 
 import anthropic
@@ -41,6 +43,24 @@ Respond ONLY as JSON:
 Prepared remarks:
 {prepared_remarks}"""
 
+_ALIGN_USER_TMPL = """These are topic labels extracted from two consecutive earnings call transcripts for {ticker}.
+Some topics cover the same business subject but were phrased differently across quarters.
+
+Prior quarter labels:
+{prev_labels}
+
+Current quarter labels:
+{curr_labels}
+
+Map each prior-quarter label to the most semantically equivalent current-quarter label.
+Only create a mapping when you are confident they refer to the same underlying business topic.
+Do not force mappings for topics that are genuinely different subjects.
+
+Respond ONLY as a flat JSON object — prior label as key, matching current label as value:
+{{"prior label here": "current label here"}}
+
+If no prior label has a clear semantic match, respond with: {{}}"""
+
 _NARRATIVE_TMPL = """Write a 3-sentence analyst note for {ticker} summarizing the most significant \
 quarter-over-quarter topic shifts. Be specific — name the actual topics. \
 Focus on what was dropped, de-emphasized, or newly introduced. \
@@ -49,8 +69,26 @@ Drift score context: {drift_score} (0=no change, 1.0=major shift).
 Diff data: {diff_json}"""
 
 
+_DEFAULT_TOPICS = {
+    "guidance_present": False,
+    "topics": [],
+    "_parse_error": True,
+}
+
+
+def _strip_fences(text: str) -> str:
+    """Remove markdown code fences that Claude sometimes adds despite instructions."""
+    text = text.strip()
+    text = re.sub(r"^```(?:json)?\s*", "", text)
+    text = re.sub(r"\s*```$", "", text)
+    return text.strip()
+
+
 def _get_client() -> anthropic.Anthropic:
-    return anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    key = settings.anthropic_api_key
+    masked = f"{key[:8]}...{key[-4:]}" if len(key) > 12 else "(empty)"
+    print(f"[analyzer] anthropic_api_key loaded: {masked}", file=sys.stderr)
+    return anthropic.Anthropic(api_key=key)
 
 
 def extract_topics(prepared_remarks: str, ticker: str) -> dict:
@@ -73,29 +111,107 @@ def extract_topics(prepared_remarks: str, ticker: str) -> dict:
             }
         ],
     )
+
     raw = response.content[0].text.strip()
-    return json.loads(raw)
+    print(f"[analyzer] stop_reason={response.stop_reason}", file=sys.stderr)
+    print(f"[analyzer] raw response ({len(raw)} chars):\n{raw[:500]}", file=sys.stderr)
+
+    cleaned = _strip_fences(raw)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as exc:
+        print(
+            f"[analyzer] JSON parse failed for {ticker}: {exc}\n"
+            f"Full raw response:\n{raw}",
+            file=sys.stderr,
+        )
+        return {**_DEFAULT_TOPICS, "_raw_response": raw}
 
 
-def compare_quarters(prev_topics: dict, curr_topics: dict, ticker: str) -> dict:
-    """Pure-Python quarter-over-quarter topic diff. No Claude call.
+def align_topic_labels(
+    prev_labels: list[str],
+    curr_labels: list[str],
+    ticker: str,
+) -> dict[str, str]:
+    """Ask Haiku to map semantically equivalent topic labels across quarters.
+
+    Returns a dict {prev_label: curr_label} for topics that refer to the same
+    subject despite different phrasing. Labels with no confident match are
+    omitted. Falls back to {} on any error so the diff can still proceed.
+    """
+    if not prev_labels or not curr_labels:
+        return {}
+
+    client = _get_client()
+    prompt = _ALIGN_USER_TMPL.format(
+        ticker=ticker,
+        prev_labels="\n".join(f"- {l}" for l in prev_labels),
+        curr_labels="\n".join(f"- {l}" for l in curr_labels),
+    )
+    try:
+        response = client.messages.create(
+            model=_HAIKU_MODEL,
+            max_tokens=512,
+            system="You are a financial analyst. Respond with valid JSON only. No preamble.",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text.strip()
+        print(f"[analyzer] align_topic_labels raw: {raw}", file=sys.stderr)
+        mapping = json.loads(_strip_fences(raw))
+        # Validate: only keep entries where both keys and values are known labels
+        curr_set = set(curr_labels)
+        prev_set = set(prev_labels)
+        validated = {
+            k: v for k, v in mapping.items()
+            if isinstance(k, str) and isinstance(v, str)
+            and k in prev_set and v in curr_set
+        }
+        print(f"[analyzer] topic aliases ({len(validated)}): {validated}", file=sys.stderr)
+        return validated
+    except Exception as exc:
+        print(f"[analyzer] align_topic_labels failed, skipping: {exc}", file=sys.stderr)
+        return {}
+
+
+def compare_quarters(
+    prev_topics: dict,
+    curr_topics: dict,
+    ticker: str,
+    label_aliases: dict[str, str] | None = None,
+) -> dict:
+    """Quarter-over-quarter topic diff.
 
     Args:
-        prev_topics: dict returned by extract_topics() for the prior quarter.
-        curr_topics: dict returned by extract_topics() for the current quarter.
-        ticker: company ticker (used for labelling only).
+        prev_topics:   dict from extract_topics() for the prior quarter.
+        curr_topics:   dict from extract_topics() for the current quarter.
+        ticker:        company ticker (for labelling only).
+        label_aliases: optional {prev_label: curr_label} map from
+                       align_topic_labels(). Matched aliases are treated as
+                       the same topic and produce a weight/sentiment delta
+                       instead of a drop+new pair.
 
     Returns a diff dict with keys:
         ticker, matched, dropped, new_topics, drift_score
     """
     _SENTIMENT_ORDER = {"positive": 0, "neutral": 1, "cautious": 2, "negative": 3}
 
-    prev_map: dict[str, Any] = {t["label"]: t for t in prev_topics.get("topics", [])}
+    aliases = label_aliases or {}
+
+    # Build prev_map with aliases applied so renamed labels line up with curr.
+    raw_prev_map: dict[str, Any] = {t["label"]: t for t in prev_topics.get("topics", [])}
+    prev_map: dict[str, Any] = {}
+    alias_used: dict[str, str] = {}  # curr_label → original prev_label
+    for label, topic in raw_prev_map.items():
+        mapped = aliases.get(label, label)
+        prev_map[mapped] = topic
+        if mapped != label:
+            alias_used[mapped] = label
+
     curr_map: dict[str, Any] = {t["label"]: t for t in curr_topics.get("topics", [])}
 
-    prev_labels = set(prev_map)
-    curr_labels = set(curr_map)
-    common_labels = prev_labels & curr_labels
+    prev_label_set = set(prev_map)
+    curr_label_set = set(curr_map)
+    common_labels = prev_label_set & curr_label_set
 
     matched = []
     drift_accumulator = 0.0
@@ -115,7 +231,7 @@ def compare_quarters(prev_topics: dict, curr_topics: dict, ticker: str) -> dict:
         if sentiment_degraded:
             drift_accumulator += 0.15
 
-        matched.append({
+        entry: dict[str, Any] = {
             "label": label,
             "prev_weight": prev_t["weight"],
             "curr_weight": curr_t["weight"],
@@ -124,16 +240,22 @@ def compare_quarters(prev_topics: dict, curr_topics: dict, ticker: str) -> dict:
             "curr_sentiment": curr_t["sentiment"],
             "sentiment_degraded": sentiment_degraded,
             "flagged": flagged,
-        })
+        }
+        # Preserve original label for display when an alias was used
+        if label in alias_used:
+            entry["prev_label"] = alias_used[label]
+        matched.append(entry)
 
     dropped = []
-    for label in prev_labels - curr_labels:
+    for label in prev_label_set - curr_label_set:
         w = prev_map[label]["weight"]
         drift_accumulator += w * 2.0
-        dropped.append({"label": label, "prev_weight": w})
+        # Recover original label for display (may have been aliased but unmatched)
+        orig = alias_used.get(label, label)
+        dropped.append({"label": orig, "prev_weight": w})
 
     new_topics = []
-    for label in curr_labels - prev_labels:
+    for label in curr_label_set - prev_label_set:
         w = curr_map[label]["weight"]
         drift_accumulator += w * 1.5
         new_topics.append({"label": label, "curr_weight": w})
@@ -151,6 +273,19 @@ def compare_quarters(prev_topics: dict, curr_topics: dict, ticker: str) -> dict:
     }
 
 
+def _strip_markdown(text: str) -> str:
+    """Remove common markdown formatting so narrative renders as plain text."""
+    # Bold: **text** or __text__
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
+    text = re.sub(r"__(.+?)__", r"\1", text)
+    # Italic: *text* or _text_
+    text = re.sub(r"\*(.+?)\*", r"\1", text)
+    text = re.sub(r"_(.+?)_", r"\1", text)
+    # ATX headings: ## Heading
+    text = re.sub(r"^#+\s+", "", text, flags=re.MULTILINE)
+    return text.strip()
+
+
 def generate_narrative(diff: dict, ticker: str, drift_score: float) -> str:
     """Call Sonnet to produce a 3-sentence analyst note about QoQ topic shifts."""
     client = _get_client()
@@ -164,4 +299,4 @@ def generate_narrative(diff: dict, ticker: str, drift_score: float) -> str:
         max_tokens=512,
         messages=[{"role": "user", "content": prompt}],
     )
-    return response.content[0].text.strip()
+    return _strip_markdown(response.content[0].text)
