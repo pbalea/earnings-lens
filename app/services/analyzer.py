@@ -229,7 +229,7 @@ def compare_quarters(
         if flagged:
             drift_accumulator += abs(weight_delta) * 1.0
         if sentiment_degraded:
-            drift_accumulator += 0.15
+            drift_accumulator += 0.08
 
         entry: dict[str, Any] = {
             "label": label,
@@ -249,7 +249,7 @@ def compare_quarters(
     dropped = []
     for label in prev_label_set - curr_label_set:
         w = prev_map[label]["weight"]
-        drift_accumulator += w * 2.0
+        drift_accumulator += w * 0.8
         # Recover original label for display (may have been aliased but unmatched)
         orig = alias_used.get(label, label)
         dropped.append({"label": orig, "prev_weight": w})
@@ -257,7 +257,7 @@ def compare_quarters(
     new_topics = []
     for label in curr_label_set - prev_label_set:
         w = curr_map[label]["weight"]
-        drift_accumulator += w * 1.5
+        drift_accumulator += w * 0.6
         new_topics.append({"label": label, "curr_weight": w})
 
     drift_score = round(min(drift_accumulator, 1.0), 4)

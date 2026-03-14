@@ -37,6 +37,25 @@
       flex-direction: column;
     }
 
+    /* ---- Spinner ---- */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+    .spinner-lg {
+      width: 32px; height: 32px;
+      border-width: 3px;
+      border-top-color: var(--accent);
+      border-color: var(--border);
+      border-top-color: var(--accent);
+    }
+
     /* ---- Header ---- */
     header {
       background: var(--surface);
@@ -59,9 +78,9 @@
       gap: 8px;
       flex: 1;
       max-width: 600px;
+      align-items: center;
     }
     .add-form input {
-      flex: 1;
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -72,6 +91,10 @@
     }
     .add-form input:focus { border-color: var(--accent); }
     .add-form input::placeholder { color: var(--muted); }
+    .add-form .f-ticker  { width: 80px; text-transform: uppercase; }
+    .add-form .f-name    { flex: 1; }
+    .add-form .f-sector  { width: 140px; }
+
     .btn {
       background: var(--accent);
       color: #fff;
@@ -82,20 +105,129 @@
       font-weight: 600;
       cursor: pointer;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
     .btn:hover { background: var(--accent-light); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-sm {
-      padding: 4px 10px;
-      font-size: 12px;
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
     }
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+    .btn-sm { padding: 5px 11px; font-size: 12px; }
+
+    /* ---- Modal ---- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      backdrop-filter: blur(3px);
+    }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 500px;
+      max-width: calc(100vw - 40px);
+      box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .modal-title { font-size: 15px; font-weight: 700; }
+    .modal-close {
+      background: none; border: none;
+      color: var(--muted); font-size: 22px;
+      cursor: pointer; line-height: 1; padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .modal-close:hover { color: var(--text); background: var(--surface2); }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 24px;
+    }
+    .modal-success {
+      text-align: center;
+      padding: 24px 0 8px;
+    }
+    .modal-success .check {
+      font-size: 36px;
+      color: var(--green);
+      margin-bottom: 10px;
+    }
+    .modal-success h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .modal-success p  { color: var(--muted); font-size: 13px; }
+
+    /* ---- Form fields ---- */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .field label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .field input, .field select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+    }
+    .field input:focus, .field select:focus { border-color: var(--accent); }
+    .field input::placeholder { color: var(--muted); }
+    .field input:disabled, .field select:disabled { opacity: 0.5; }
+    .row-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ---- Toast ---- */
+    @keyframes slideUp {
+      from { transform: translateY(8px); opacity: 0; }
+      to   { transform: translateY(0);   opacity: 1; }
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 13px;
+      z-index: 200;
+      animation: slideUp 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 340px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.error   { border-left: 3px solid var(--red); }
+    .toast-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
     /* ---- Layout ---- */
-    .layout {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+    .layout { display: flex; flex: 1; overflow: hidden; }
 
     /* ---- Sidebar ---- */
     aside {
@@ -124,18 +256,15 @@
       border: 1px solid transparent;
     }
     .company-item:hover { background: var(--surface2); }
-    .company-item.active {
-      background: var(--surface2);
-      border-color: var(--accent);
-    }
+    .company-item.active { background: var(--surface2); border-color: var(--accent); }
     .ticker-badge {
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 11px; font-weight: 700;
       background: var(--surface2);
       color: var(--accent-light);
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 2px 6px;
+      flex-shrink: 0;
     }
     .company-item.active .ticker-badge { background: var(--accent); color: #fff; border-color: var(--accent); }
     .company-name { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -149,7 +278,6 @@
       flex-direction: column;
       gap: 16px;
     }
-
     .empty-state {
       flex: 1;
       display: flex;
@@ -160,6 +288,17 @@
       gap: 8px;
     }
     .empty-state h3 { font-size: 16px; color: var(--text); }
+    .panel-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex: 1;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 60px 0;
+    }
 
     /* ---- Cards ---- */
     .card {
@@ -178,22 +317,12 @@
     }
 
     /* ---- Drift meter ---- */
-    .drift-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .drift-score-num {
-      font-size: 36px;
-      font-weight: 800;
-      min-width: 80px;
-    }
+    .drift-row { display: flex; align-items: center; gap: 16px; }
+    .drift-score-num { font-size: 36px; font-weight: 800; min-width: 80px; }
     .drift-score-num.green { color: var(--green); }
     .drift-score-num.yellow { color: var(--yellow); }
-    .drift-score-num.red { color: var(--red); }
-    .drift-bar-wrap {
-      flex: 1;
-    }
+    .drift-score-num.red   { color: var(--red); }
+    .drift-bar-wrap { flex: 1; }
     .drift-bar-track {
       background: var(--surface2);
       border-radius: 999px;
@@ -201,145 +330,252 @@
       overflow: hidden;
       margin-bottom: 4px;
     }
-    .drift-bar-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width 0.4s ease;
-    }
-    .drift-bar-fill.green { background: var(--green); }
+    .drift-bar-fill { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+    .drift-bar-fill.green  { background: var(--green); }
     .drift-bar-fill.yellow { background: var(--yellow); }
-    .drift-bar-fill.red { background: var(--red); }
-    .drift-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      color: var(--muted);
-    }
+    .drift-bar-fill.red    { background: var(--red); }
+    .drift-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
 
     /* ---- Narrative ---- */
-    .narrative-text {
-      line-height: 1.65;
-      color: var(--text);
-      font-size: 13px;
-    }
+    .narrative-text { line-height: 1.7; color: var(--text); font-size: 13px; }
 
     /* ---- Topics table ---- */
-    .topics-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
+    .topics-scroll {
+      max-height: 420px;
+      overflow-y: auto;
+      /* Keep the header visible while scrolling */
+      border-radius: 4px;
     }
+    .topics-scroll::-webkit-scrollbar { width: 6px; }
+    .topics-scroll::-webkit-scrollbar-track { background: transparent; }
+    .topics-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .topics-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .topics-table th {
       text-align: left;
       padding: 8px 10px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
       color: var(--muted);
       border-bottom: 1px solid var(--border);
     }
     .topics-table td {
-      padding: 8px 10px;
+      padding: 9px 10px;
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
     .topics-table tr:last-child td { border-bottom: none; }
-    .topics-table tr.dropped { background: rgba(239,68,68,0.08); }
-    .topics-table tr.new { background: rgba(34,197,94,0.08); }
+    .topics-table tr.dropped { background: rgba(239,68,68,0.06); }
+    .topics-table tr.new     { background: rgba(34,197,94,0.06); }
     .topics-table tr.dropped .topic-label { color: var(--red); }
-    .topics-table tr.new .topic-label { color: var(--green); }
+    .topics-table tr.new     .topic-label { color: var(--green); }
 
-    .delta { font-weight: 600; }
-    .delta.pos { color: var(--green); }
-    .delta.neg { color: var(--red); }
-    .delta.zero { color: var(--muted); }
+    /* Delta column — colored pill */
+    .delta {
+      display: inline-flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.2px;
+    }
+    .delta.pos  { color: var(--green);  background: rgba(34,197,94,0.12); }
+    .delta.neg  { color: var(--red);    background: rgba(239,68,68,0.12); }
+    .delta.zero { color: var(--muted);  background: transparent; }
 
     .sentiment-pill {
       display: inline-block;
       padding: 2px 8px;
       border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 11px; font-weight: 600;
     }
-    .sent-positive { background: rgba(34,197,94,0.15); color: var(--green); }
+    .sent-positive { background: rgba(34,197,94,0.15);   color: var(--green); }
     .sent-neutral  { background: rgba(148,163,184,0.15); color: #94a3b8; }
-    .sent-cautious { background: rgba(234,179,8,0.15); color: var(--yellow); }
-    .sent-negative { background: rgba(239,68,68,0.15); color: var(--red); }
+    .sent-cautious { background: rgba(234,179,8,0.15);   color: var(--yellow); }
+    .sent-negative { background: rgba(239,68,68,0.15);   color: var(--red); }
 
-    .tag-dropped { font-size: 10px; font-weight: 700; color: var(--red); background: rgba(239,68,68,0.12); padding: 1px 6px; border-radius: 4px; }
-    .tag-new     { font-size: 10px; font-weight: 700; color: var(--green); background: rgba(34,197,94,0.12); padding: 1px 6px; border-radius: 4px; }
+    .tag-dropped { font-size: 10px; font-weight: 700; color: var(--red);   background: rgba(239,68,68,0.12); padding: 2px 7px; border-radius: 4px; }
+    .tag-new     { font-size: 10px; font-weight: 700; color: var(--green); background: rgba(34,197,94,0.12);  padding: 2px 7px; border-radius: 4px; }
 
     /* ---- Alerts ---- */
-    .alert-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-    }
+    .alert-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .alert-item:last-child { border-bottom: none; }
-    .alert-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-top: 4px;
-      flex-shrink: 0;
-    }
+    .alert-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
     .sev-high   { background: var(--red); }
     .sev-medium { background: var(--yellow); }
     .sev-low    { background: var(--green); }
     .alert-msg  { font-size: 13px; line-height: 1.5; }
     .alert-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-    .loading { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
-    .error-msg { color: var(--red); font-size: 13px; padding: 8px 12px; background: rgba(239,68,68,0.1); border-radius: var(--radius); }
-
-    .ingest-form {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .ingest-form input, .ingest-form select {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      padding: 6px 10px;
-      font-size: 13px;
-      outline: none;
-    }
-    .ingest-form input:focus, .ingest-form select:focus { border-color: var(--accent); }
-    .ingest-form input::placeholder { color: var(--muted); }
-    .ingest-url { flex: 1; min-width: 200px; }
+    .error-msg { color: var(--red); font-size: 13px; padding: 9px 12px; background: rgba(239,68,68,0.1); border-radius: var(--radius); border: 1px solid rgba(239,68,68,0.2); }
   </style>
 </head>
 <body>
 <div id="root"></div>
 
 <script type="text/babel">
-const { useState, useEffect, useCallback } = React;
+const { useState, useEffect, useCallback, useRef } = React;
+const API = "";
 
-const API = "";  // same origin
-
+// ---------------------------------------------------------------------------
+// useApi — generic data fetching hook
+// ---------------------------------------------------------------------------
 function useApi(path, deps = []) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [data, setData]       = useState(null);
+  const [loading, setLoading] = useState(!!path);
+  const [error, setError]     = useState(null);
 
   const refetch = useCallback(() => {
-    if (!path) { setLoading(false); return; }
+    if (!path) { setLoading(false); setData(null); return; }
     setLoading(true);
     fetch(API + path)
       .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
       .then(d => { setData(d); setError(null); })
-      .catch(e => setError(e.message))
+      .catch(e => { setError(e.message); setData(null); })
       .finally(() => setLoading(false));
   }, [path]);
 
   useEffect(() => { refetch(); }, [refetch, ...deps]);
   return { data, loading, error, refetch };
+}
+
+// ---------------------------------------------------------------------------
+// Spinner
+// ---------------------------------------------------------------------------
+function Spinner({ large }) {
+  return <div className={`spinner${large ? " spinner-lg" : ""}`} />;
+}
+
+// ---------------------------------------------------------------------------
+// Toast notification
+// ---------------------------------------------------------------------------
+function Toast({ message, type, onDismiss }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 4000);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className={`toast ${type}`} onClick={onDismiss} style={{cursor:"pointer"}}>
+      <div className={`toast-dot`} style={{background: type === "success" ? "var(--green)" : "var(--red)"}} />
+      <span>{message}</span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Modal
+// ---------------------------------------------------------------------------
+function Modal({ title, onClose, children }) {
+  // Close on overlay click
+  const handleOverlay = e => { if (e.target === e.currentTarget && onClose) onClose(); };
+  // Close on Escape
+  useEffect(() => {
+    const handler = e => { if (e.key === "Escape" && onClose) onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div className="modal-overlay" onMouseDown={handleOverlay}>
+      <div className="modal">
+        <div className="modal-header">
+          <div className="modal-title">{title}</div>
+          {onClose && <button className="modal-close" onClick={onClose}>×</button>}
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Ingest Transcript modal
+// ---------------------------------------------------------------------------
+function IngestModal({ ticker, onClose, onSuccess }) {
+  const [url,     setUrl]     = useState("");
+  const [quarter, setQuarter] = useState("Q1");
+  const [year,    setYear]    = useState(new Date().getFullYear());
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState(null);
+  const [result,  setResult]  = useState(null);
+
+  const submit = async () => {
+    if (!url) return;
+    setLoading(true); setError(null);
+    try {
+      const r = await fetch(API + "/transcripts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker, url, fiscal_quarter: quarter, fiscal_year: parseInt(year) }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || r.statusText);
+      setResult(data);
+      setTimeout(() => { onSuccess(data); onClose(); }, 1800);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKey = e => { if (e.key === "Enter" && !loading && url) submit(); };
+
+  if (result) {
+    return (
+      <Modal title={`Ingest Transcript — ${ticker}`} onClose={null}>
+        <div className="modal-success">
+          <div className="check">✓</div>
+          <h3>Transcript ingested</h3>
+          <p>
+            Drift score: {result.comparison
+              ? (result.comparison.drift_score * 100).toFixed(1) + "%"
+              : "n/a — first transcript for this company"}
+            {result.alerts_created > 0 && ` · ${result.alerts_created} alert(s) created`}
+          </p>
+          <p style={{marginTop:6, fontSize:12}}>Refreshing analysis…</p>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal title={`Ingest Transcript — ${ticker}`} onClose={!loading ? onClose : null}>
+      <div className="field">
+        <label>Transcript URL</label>
+        <input
+          value={url} onChange={e => setUrl(e.target.value)}
+          onKeyDown={handleKey}
+          placeholder="https://www.fool.com/earnings/call-transcripts/…"
+          disabled={loading} autoFocus
+        />
+      </div>
+      <div className="row-fields">
+        <div className="field">
+          <label>Fiscal Quarter</label>
+          <select value={quarter} onChange={e => setQuarter(e.target.value)} disabled={loading}>
+            {["Q1","Q2","Q3","Q4"].map(q => <option key={q}>{q}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label>Fiscal Year</label>
+          <input
+            type="number" value={year} onChange={e => setYear(e.target.value)}
+            min={2000} max={2100} disabled={loading}
+          />
+        </div>
+      </div>
+      {error && <div className="error-msg">{error}</div>}
+      <div className="modal-footer">
+        <button className="btn btn-ghost" onClick={onClose} disabled={loading}>Cancel</button>
+        <button className="btn" onClick={submit} disabled={loading || !url}>
+          {loading
+            ? <><Spinner /> Analyzing transcript…</>
+            : "Ingest Transcript"}
+        </button>
+      </div>
+    </Modal>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -353,12 +589,10 @@ function DriftMeter({ score }) {
       <div className={`drift-score-num ${cls}`}>{pct}<span style={{fontSize:18}}>%</span></div>
       <div className="drift-bar-wrap">
         <div className="drift-bar-track">
-          <div className={`drift-bar-fill ${cls}`} style={{width: `${pct}%`}} />
+          <div className={`drift-bar-fill ${cls}`} style={{width:`${pct}%`}} />
         </div>
         <div className="drift-labels">
-          <span>stable</span>
-          <span>moderate</span>
-          <span>major shift</span>
+          <span>stable</span><span>moderate</span><span>major shift</span>
         </div>
       </div>
     </div>
@@ -369,7 +603,7 @@ function DriftMeter({ score }) {
 // Sentiment pill
 // ---------------------------------------------------------------------------
 function SentimentPill({ s }) {
-  const cls = { positive: "sent-positive", neutral: "sent-neutral", cautious: "sent-cautious", negative: "sent-negative" }[s] || "sent-neutral";
+  const cls = {positive:"sent-positive", neutral:"sent-neutral", cautious:"sent-cautious", negative:"sent-negative"}[s] || "sent-neutral";
   return <span className={`sentiment-pill ${cls}`}>{s}</span>;
 }
 
@@ -381,47 +615,68 @@ function TopicsTable({ diff }) {
   const { matched = [], dropped = [], new_topics = [] } = diff;
 
   const fmt = v => v != null ? (v * 100).toFixed(1) + "%" : "—";
-  const fmtDelta = d => {
-    if (d == null) return "—";
-    const s = (d > 0 ? "+" : "") + (d * 100).toFixed(1) + "%";
-    const cls = d > 0.005 ? "pos" : d < -0.005 ? "neg" : "zero";
-    return <span className={`delta ${cls}`}>{s}</span>;
+
+  const DeltaCell = ({ d }) => {
+    if (d == null) return <span className="delta zero">—</span>;
+    const sign = d > 0.0005 ? "+" : "";
+    const cls  = d > 0.0005 ? "pos" : d < -0.0005 ? "neg" : "zero";
+    return <span className={`delta ${cls}`}>{sign}{(d * 100).toFixed(1)}%</span>;
   };
 
+  // Sort: matched first (flagged on top), then dropped, then new
+  const sortedMatched = [...matched].sort((a, b) => {
+    if (a.flagged !== b.flagged) return a.flagged ? -1 : 1;
+    return b.curr_weight - a.curr_weight;
+  });
+
   const rows = [
-    ...matched.map(t => ({ ...t, _type: "matched" })),
+    ...sortedMatched.map(t => ({ ...t, _type: "matched" })),
     ...dropped.map(t => ({ label: t.label, prev_weight: t.prev_weight, curr_weight: null, weight_delta: null, curr_sentiment: null, _type: "dropped" })),
     ...new_topics.map(t => ({ label: t.label, prev_weight: null, curr_weight: t.curr_weight, weight_delta: null, curr_sentiment: null, _type: "new" })),
   ];
 
   return (
+    <div className="topics-scroll">
     <table className="topics-table">
       <thead>
         <tr>
-          <th>Topic</th>
-          <th>Prev</th>
-          <th>Curr</th>
-          <th>Delta</th>
-          <th>Sentiment</th>
-          <th></th>
+          <th style={{position:"sticky", top:0, background:"var(--surface)", zIndex:1}}>Topic</th>
+          <th style={{position:"sticky", top:0, background:"var(--surface)", zIndex:1}}>Prev</th>
+          <th style={{position:"sticky", top:0, background:"var(--surface)", zIndex:1}}>Curr</th>
+          <th style={{position:"sticky", top:0, background:"var(--surface)", zIndex:1}}>Delta</th>
+          <th style={{position:"sticky", top:0, background:"var(--surface)", zIndex:1}}>Sentiment</th>
+          <th style={{position:"sticky", top:0, background:"var(--surface)", zIndex:1}}></th>
         </tr>
       </thead>
       <tbody>
         {rows.map((row, i) => (
           <tr key={i} className={row._type === "dropped" ? "dropped" : row._type === "new" ? "new" : ""}>
-            <td className="topic-label" style={{fontWeight:500}}>{row.label}</td>
+            <td>
+              <div className="topic-label" style={{fontWeight:500}}>{row.label}</div>
+              {row.prev_label && (
+                <div style={{fontSize:11, color:"var(--muted)", marginTop:2}}>
+                  was: {row.prev_label}
+                </div>
+              )}
+            </td>
             <td>{fmt(row.prev_weight)}</td>
             <td>{fmt(row.curr_weight)}</td>
-            <td>{fmtDelta(row.weight_delta)}</td>
+            <td><DeltaCell d={row.weight_delta} /></td>
             <td>{row.curr_sentiment ? <SentimentPill s={row.curr_sentiment} /> : "—"}</td>
             <td>
               {row._type === "dropped" && <span className="tag-dropped">DROPPED</span>}
-              {row._type === "new" && <span className="tag-new">NEW</span>}
+              {row._type === "new"     && <span className="tag-new">NEW</span>}
+              {row._type === "matched" && row.flagged && (
+                <span style={{fontSize:10, color:"var(--yellow)", background:"rgba(234,179,8,0.1)", padding:"2px 7px", borderRadius:4, fontWeight:700}}>
+                  FLAGGED
+                </span>
+              )}
             </td>
           </tr>
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -429,12 +684,12 @@ function TopicsTable({ diff }) {
 // Alerts panel
 // ---------------------------------------------------------------------------
 function AlertsPanel({ companyId }) {
-  const { data: alerts, loading, error } = useApi("/alerts", []);
-  const filtered = companyId && alerts ? alerts.filter(a => a.company_id === companyId) : (alerts || []);
+  const { data: alerts, loading, error } = useApi("/alerts");
+  const filtered = alerts ? (companyId ? alerts.filter(a => a.company_id === companyId) : alerts) : [];
 
-  if (loading) return <div className="loading">Loading alerts…</div>;
-  if (error) return <div className="error-msg">Failed to load alerts: {error}</div>;
-  if (!filtered.length) return <p style={{color:"var(--muted)", fontSize:13}}>No alerts.</p>;
+  if (loading) return <div style={{display:"flex", gap:10, alignItems:"center", color:"var(--muted)", fontSize:13}}><Spinner />Loading alerts…</div>;
+  if (error)   return <div className="error-msg">Failed to load alerts: {error}</div>;
+  if (!filtered.length) return <p style={{color:"var(--muted)", fontSize:13}}>No alerts for this company.</p>;
 
   return filtered.slice(0, 20).map(a => (
     <div key={a.id} className="alert-item">
@@ -448,93 +703,71 @@ function AlertsPanel({ companyId }) {
 }
 
 // ---------------------------------------------------------------------------
-// Ingest transcript form
-// ---------------------------------------------------------------------------
-function IngestForm({ ticker, onDone }) {
-  const [url, setUrl] = useState("");
-  const [quarter, setQuarter] = useState("Q1");
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [result, setResult] = useState(null);
-
-  const submit = async () => {
-    setLoading(true); setError(null); setResult(null);
-    try {
-      const r = await fetch(API + "/transcripts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker, url, fiscal_quarter: quarter, fiscal_year: parseInt(year) }),
-      });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.detail || r.statusText);
-      setResult(data);
-      onDone();
-    } catch (e) { setError(e.message); }
-    finally { setLoading(false); }
-  };
-
-  return (
-    <div className="card">
-      <div className="card-title">Ingest Transcript for {ticker}</div>
-      <div className="ingest-form">
-        <input className="ingest-url" value={url} onChange={e => setUrl(e.target.value)} placeholder="Transcript URL (Motley Fool)" />
-        <select value={quarter} onChange={e => setQuarter(e.target.value)}>
-          {["Q1","Q2","Q3","Q4"].map(q => <option key={q}>{q}</option>)}
-        </select>
-        <input type="number" value={year} onChange={e => setYear(e.target.value)} style={{width:80}} min={2000} max={2100} />
-        <button className="btn" onClick={submit} disabled={loading || !url}>
-          {loading ? "Ingesting…" : "Ingest"}
-        </button>
-      </div>
-      {error && <div className="error-msg" style={{marginTop:8}}>{error}</div>}
-      {result && <div style={{marginTop:8, color:"var(--green)", fontSize:13}}>
-        Ingested! Drift score: {result.comparison ? (result.comparison.drift_score * 100).toFixed(1) + "%" : "n/a (first transcript)"}
-        {result.alerts_created > 0 && ` · ${result.alerts_created} alert(s) created`}
-      </div>}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Main panel
 // ---------------------------------------------------------------------------
-function MainPanel({ company, onAnalysisRefetch }) {
+function MainPanel({ company, onIngested }) {
   const [showIngest, setShowIngest] = useState(false);
-  const { data: analysis, loading, error, refetch } = useApi(
-    company ? `/companies/${company.ticker}/latest-analysis` : null,
-    [company?.ticker]
-  );
+  const analysisPath = company ? `/companies/${company.ticker}/latest-analysis` : null;
+  const { data: analysis, loading, error, refetch } = useApi(analysisPath, [company?.ticker]);
 
-  if (!company) return (
-    <div className="empty-state">
-      <h3>Select a company</h3>
-      <p>Add a company using the search bar above, then select it from the sidebar.</p>
-    </div>
-  );
+  const handleIngestSuccess = () => {
+    refetch();
+    onIngested();
+  };
+
+  if (!company) {
+    return (
+      <div className="empty-state">
+        <h3>Select a company</h3>
+        <p>Add a company using the form above, then select it from the sidebar.</p>
+      </div>
+    );
+  }
 
   return (
     <>
+      {/* Company header row */}
       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12}}>
         <div>
           <h2 style={{fontSize:20, fontWeight:700}}>{company.ticker}</h2>
-          <p style={{color:"var(--muted)", fontSize:13}}>{company.name}{company.sector ? ` · ${company.sector}` : ""}</p>
+          <p style={{color:"var(--muted)", fontSize:13}}>
+            {company.name}{company.sector ? ` · ${company.sector}` : ""}
+          </p>
         </div>
-        <button className="btn btn-sm" onClick={() => setShowIngest(v => !v)}>
-          {showIngest ? "Close" : "+ Ingest Transcript"}
+        <button className="btn btn-sm" onClick={() => setShowIngest(true)}>
+          + Ingest Transcript
         </button>
       </div>
 
-      {showIngest && <IngestForm ticker={company.ticker} onDone={() => { setShowIngest(false); refetch(); onAnalysisRefetch(); }} />}
+      {/* Ingest modal */}
+      {showIngest && (
+        <IngestModal
+          ticker={company.ticker}
+          onClose={() => setShowIngest(false)}
+          onSuccess={handleIngestSuccess}
+        />
+      )}
 
-      {loading && <div className="loading">Loading analysis…</div>}
+      {/* Loading state */}
+      {loading && (
+        <div className="panel-loading">
+          <Spinner large />
+          <span>Loading analysis…</span>
+        </div>
+      )}
+
+      {/* No analysis yet */}
       {!loading && error && (
         <div className="empty-state">
           <h3>No analysis yet</h3>
           <p>Ingest at least two transcripts to generate a quarter-over-quarter comparison.</p>
+          <button className="btn btn-sm" style={{marginTop:12}} onClick={() => setShowIngest(true)}>
+            + Ingest First Transcript
+          </button>
         </div>
       )}
 
+      {/* Analysis cards */}
       {!loading && analysis && (
         <>
           <div className="card">
@@ -567,19 +800,23 @@ function MainPanel({ company, onAnalysisRefetch }) {
 }
 
 // ---------------------------------------------------------------------------
-// Add Company form (in header)
+// Add Company form (header bar)
 // ---------------------------------------------------------------------------
 function AddCompanyForm({ onAdded }) {
-  const [ticker, setTicker] = useState("");
-  const [name, setName] = useState("");
-  const [sector, setSector] = useState("");
+  const [ticker,  setTicker]  = useState("");
+  const [name,    setName]    = useState("");
+  const [sector,  setSector]  = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [toast,   setToast]   = useState(null);   // {message, type}
 
-  const submit = async (e) => {
+  const showToast = (message, type) => {
+    setToast({ message, type });
+  };
+
+  const submit = async e => {
     e.preventDefault();
     if (!ticker || !name) return;
-    setLoading(true); setError(null);
+    setLoading(true);
     try {
       const r = await fetch(API + "/companies", {
         method: "POST",
@@ -589,21 +826,51 @@ function AddCompanyForm({ onAdded }) {
       const data = await r.json();
       if (!r.ok) throw new Error(data.detail || r.statusText);
       setTicker(""); setName(""); setSector("");
+      showToast(`${data.ticker} added successfully`, "success");
       onAdded(data);
-    } catch (e) { setError(e.message); }
-    finally { setLoading(false); }
+    } catch (e) {
+      showToast(e.message, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form className="add-form" onSubmit={submit}>
-      <input value={ticker} onChange={e => setTicker(e.target.value)} placeholder="TICKER" style={{maxWidth:90, textTransform:"uppercase"}} />
-      <input value={name} onChange={e => setName(e.target.value)} placeholder="Company name" />
-      <input value={sector} onChange={e => setSector(e.target.value)} placeholder="Sector (optional)" style={{maxWidth:160}} />
-      <button className="btn" type="submit" disabled={loading || !ticker || !name}>
-        {loading ? "Adding…" : "Add Company"}
-      </button>
-      {error && <span style={{color:"var(--red)", fontSize:12}}>{error}</span>}
-    </form>
+    <>
+      <form className="add-form" onSubmit={submit}>
+        <input
+          className="f-ticker"
+          value={ticker}
+          onChange={e => setTicker(e.target.value)}
+          placeholder="TICKER"
+          disabled={loading}
+        />
+        <input
+          className="f-name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="Company name"
+          disabled={loading}
+        />
+        <input
+          className="f-sector"
+          value={sector}
+          onChange={e => setSector(e.target.value)}
+          placeholder="Sector (optional)"
+          disabled={loading}
+        />
+        <button className="btn" type="submit" disabled={loading || !ticker || !name}>
+          {loading ? <><Spinner />Adding…</> : "Add Company"}
+        </button>
+      </form>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onDismiss={() => setToast(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -612,13 +879,19 @@ function AddCompanyForm({ onAdded }) {
 // ---------------------------------------------------------------------------
 function App() {
   const [selected, setSelected] = useState(null);
-  const [version, setVersion] = useState(0);    // bump to force sidebar refetch
+  const [listVer,  setListVer]  = useState(0);
 
-  const { data: companies, loading: companiesLoading, refetch: refetchCompanies } = useApi("/companies", [version]);
+  const { data: companies, loading: companiesLoading, refetch: refetchCompanies } =
+    useApi("/companies", [listVer]);
 
-  const handleAdded = (company) => {
+  const handleAdded = company => {
     refetchCompanies();
     setSelected(company);
+  };
+
+  const handleIngested = () => {
+    // bump listVer so sidebar refetches (in case transcript count badge added later)
+    setListVer(v => v + 1);
   };
 
   return (
@@ -630,25 +903,31 @@ function App() {
       <div className="layout">
         <aside>
           <h2>Companies</h2>
-          {companiesLoading && <div className="loading">…</div>}
+          {companiesLoading && (
+            <div style={{display:"flex", justifyContent:"center", padding:16}}>
+              <Spinner />
+            </div>
+          )}
           {companies && companies.map(c => (
             <div
               key={c.id}
               className={`company-item ${selected?.id === c.id ? "active" : ""}`}
               onClick={() => setSelected(c)}
             >
-              <div>
+              <div style={{minWidth:0}}>
                 <div className="ticker-badge">{c.ticker}</div>
                 <div className="company-name">{c.name}</div>
               </div>
             </div>
           ))}
           {companies && companies.length === 0 && (
-            <p style={{color:"var(--muted)", fontSize:12, padding:"8px 10px"}}>No companies yet.</p>
+            <p style={{color:"var(--muted)", fontSize:12, padding:"8px 10px"}}>
+              No companies yet.
+            </p>
           )}
         </aside>
         <main>
-          <MainPanel company={selected} onAnalysisRefetch={() => setVersion(v => v + 1)} />
+          <MainPanel company={selected} onIngested={handleIngested} />
         </main>
       </div>
     </>
