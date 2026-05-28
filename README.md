@@ -1,8 +1,19 @@
 # earnings-lens
 
-A pipeline that ingests public earnings call transcripts, runs multi-dimensional
-sentiment and topic analysis via the Anthropic API, stores results in Postgres,
-and exposes a REST API + minimal React dashboard.
+**AI-powered earnings call transcript analyzer.** Ingests public earnings call transcripts, extracts structured topics and sentiment via the Claude API, computes quarter-over-quarter drift scores, and surfaces insights through a REST API and a minimal React dashboard.
+
+---
+
+## Features
+
+- **Transcript ingestion** — fetches Motley Fool earnings call pages via httpx + BeautifulSoup
+- **Segment parsing** — regex-based boundary detection splits prepared remarks from Q&A
+- **Topic extraction** — Claude Haiku extracts 8–12 weighted, sentiment-tagged topics per transcript
+- **Drift scoring** — pure-Python algorithm quantifies how much management narrative shifted between quarters
+- **Analyst narratives** — Claude Sonnet generates a concise 3-sentence analyst summary per comparison
+- **Alerts** — automatic flagging when drift score exceeds thresholds
+- **REST API** — FastAPI with interactive Swagger docs at `/docs`
+- **Dashboard** — single-file React frontend (no build step, CDN imports)
 
 ---
 
@@ -10,34 +21,46 @@ and exposes a REST API + minimal React dashboard.
 
 ```
 earnings-lens/
-  app/
-    main.py          FastAPI app, mounts router + serves frontend
-    config.py        Pydantic-settings from .env
-    database.py      SQLAlchemy engine + session + get_db dependency
-    models.py        ORM models (Company, Transcript, TopicExtraction,
-                       QuarterComparison, Alert)
-    schemas.py       Pydantic request/response schemas
-    routers/
-      companies.py   GET/POST /companies, /{ticker}/transcripts,
-                       /{ticker}/latest-analysis
-      transcripts.py POST /transcripts  (full ingest pipeline)
-      analysis.py    GET /alerts
-    services/
-      scraper.py     httpx + BeautifulSoup transcript fetcher
-      parser.py      Q&A boundary segmentation
-      analyzer.py    Claude API calls (extract_topics, compare_quarters,
-                       generate_narrative)
-      comparator.py  compute_drift_score() helper (also used in tests)
-  alembic/           Alembic migrations (initial schema included)
-  frontend/
-    index.html       Single-file React dashboard (CDN, no build step)
-  tests/
-    test_parser.py
-    test_comparator.py
-    test_analyzer.py
-  .env.example
-  requirements.txt
-  README.md
+├── app/
+│   ├── main.py           FastAPI app, mounts routers + serves frontend
+│   ├── config.py         Pydantic-Settings config from .env
+│   ├── database.py       SQLAlchemy engine, session, get_db dependency
+│   ├── models.py         ORM models: Company, Transcript, TopicExtraction,
+│   │                       QuarterComparison, Alert
+│   ├── schemas.py        Pydantic request/response schemas
+│   ├── routers/
+│   │   ├── companies.py  GET/POST /companies, /{ticker}/transcripts,
+│   │   │                   /{ticker}/latest-analysis
+│   │   ├── transcripts.py  POST /transcripts  (full ingest pipeline)
+│   │   └── analysis.py   GET /alerts
+│   └── services/
+│       ├── scraper.py    httpx + BeautifulSoup transcript fetcher
+│       ├── parser.py     Q&A boundary segmentation
+│       ├── analyzer.py   Claude API calls (extract_topics, generate_narrative)
+│       └── comparator.py compute_drift_score() helper
+├── alembic/              Alembic migrations (initial schema included)
+├── frontend/
+│   └── index.html        Single-file React dashboard (CDN, no build step)
+├── tests/
+│   ├── test_parser.py
+│   ├── test_comparator.py
+│   └── test_analyzer.py
+├── .env.example
+└── requirements.txt
+```
+
+---
+
+## How it works
+
+```
+URL  →  scraper  →  parser  →  analyzer (Haiku)  →  comparator  →  analyzer (Sonnet)
+                                   ↓                      ↓
+                            TopicExtraction         QuarterComparison + Alerts
+                                   ↓
+                              Postgres (via SQLAlchemy + Alembic)
+                                   ↓
+                          FastAPI  →  React Dashboard
 ```
 
 ---
@@ -45,24 +68,24 @@ earnings-lens/
 ## Prerequisites
 
 - Python 3.11+
-- PostgreSQL 14+ running locally (or via Docker)
+- PostgreSQL 14+ (local or Docker)
 - An [Anthropic API key](https://console.anthropic.com/)
 
 ---
 
 ## Quick start
 
-### 1. Clone and create virtual environment
+### 1. Clone and set up a virtual environment
 
 ```bash
-git clone <repo-url> earnings-lens
+git clone https://github.com/YOUR_USERNAME/earnings-lens.git
 cd earnings-lens
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure environment
+### 2. Configure environment variables
 
 ```bash
 cp .env.example .env
@@ -70,7 +93,7 @@ cp .env.example .env
 
 Edit `.env`:
 
-```
+```env
 ANTHROPIC_API_KEY=sk-ant-...
 DATABASE_URL=postgresql://myuser:mypassword@localhost:5432/earnings_lens
 SCRAPE_DELAY_SECONDS=2
@@ -79,13 +102,11 @@ SCRAPE_DELAY_SECONDS=2
 ### 3. Create the database
 
 ```bash
-# Using psql:
 createdb earnings_lens
-# Or with a custom user:
-psql -c "CREATE DATABASE earnings_lens;" -U postgres
+# or: psql -c "CREATE DATABASE earnings_lens;" -U postgres
 ```
 
-### 4. Run Alembic migrations
+### 4. Run database migrations
 
 ```bash
 PYTHONPATH=. alembic upgrade head
@@ -97,7 +118,8 @@ PYTHONPATH=. alembic upgrade head
 PYTHONPATH=. uvicorn app.main:app --reload --port 8000
 ```
 
-Open <http://localhost:8000> for the dashboard, or <http://localhost:8000/docs> for the interactive API docs.
+- Dashboard: http://localhost:8000
+- Interactive API docs: http://localhost:8000/docs
 
 ---
 
@@ -107,10 +129,10 @@ Open <http://localhost:8000> for the dashboard, or <http://localhost:8000/docs> 
 |--------|------|-------------|
 | `GET`  | `/health` | Health check — `{"status": "ok"}` |
 | `GET`  | `/companies` | List all tracked companies |
-| `POST` | `/companies` | Add a company `{ticker, name, sector}` |
+| `POST` | `/companies` | Register a company |
 | `GET`  | `/companies/{ticker}/transcripts` | List transcripts for a ticker |
 | `GET`  | `/companies/{ticker}/latest-analysis` | Most recent `QuarterComparison` |
-| `POST` | `/transcripts` | Ingest a transcript (full pipeline) |
+| `POST` | `/transcripts` | Ingest a transcript (runs full pipeline) |
 | `GET`  | `/alerts` | All alerts, newest first |
 
 ### POST /companies
@@ -136,28 +158,28 @@ Open <http://localhost:8000> for the dashboard, or <http://localhost:8000/docs> 
 
 **Pipeline steps:**
 
-1. Fetches the transcript page via httpx (Motley Fool)
-2. Segments prepared remarks vs. Q&A with regex boundary detection
-3. Calls **claude-haiku-4-5-20251001** to extract 8-12 structured topics
-4. If a prior transcript exists, runs `compare_quarters()` (pure Python diff)
-5. Calls **claude-sonnet-4-6** to generate a 3-sentence analyst narrative
-6. Persists `Transcript`, `TopicExtraction`, `QuarterComparison`, and any `Alert` rows
-7. Returns the full `IngestResponse`
+1. Fetch the transcript page (httpx + BeautifulSoup)
+2. Segment prepared remarks vs. Q&A via regex boundary detection
+3. Call **claude-haiku-4-5** to extract 8–12 weighted, sentiment-tagged topics
+4. If a prior transcript exists, run `compare_quarters()` (pure-Python diff)
+5. Call **claude-sonnet-4-6** to generate a 3-sentence analyst narrative
+6. Persist `Transcript`, `TopicExtraction`, `QuarterComparison`, and any `Alert` rows
+7. Return the full `IngestResponse`
 
 ---
 
-## Drift score formula
+## Drift score
 
-Clamped to `[0.0, 1.0]`:
+The drift score quantifies how much the management narrative shifted between two consecutive quarters. It is clamped to `[0.0, 1.0]`.
 
 | Event | Contribution |
 |-------|-------------|
 | Dropped topic | `weight × 2.0` |
 | New topic | `weight × 1.5` |
-| Flagged matched topic (`|Δweight| > 0.08`) | `|Δweight| × 1.0` |
-| Sentiment degradation (positive→neutral, etc.) | `+0.15` |
+| Matched topic with `\|Δweight\| > 0.08` | `\|Δweight\| × 1.0` |
+| Sentiment degradation (positive→neutral, neutral→negative) | `+0.15` |
 
-Dashboard color bands: green `< 0.2`, yellow `0.2–0.4`, red `> 0.4`.
+**Dashboard color bands:** green `< 0.2` · yellow `0.2–0.4` · red `> 0.4`
 
 ---
 
@@ -167,15 +189,16 @@ Dashboard color bands: green `< 0.2`, yellow `0.2–0.4`, red `> 0.4`.
 PYTHONPATH=. pytest tests/ -v
 ```
 
-All 31 tests pass without a live database or real API key (Anthropic client is mocked in `test_analyzer.py`).
+31 tests pass without a live database or real Anthropic API key (the Claude client is mocked in `test_analyzer.py`).
 
 ---
 
 ## Docker (optional)
 
-A minimal `docker-compose.yml` to spin up Postgres:
+Spin up Postgres with Docker Compose:
 
 ```yaml
+# docker-compose.yml
 version: "3.9"
 services:
   db:
@@ -188,16 +211,17 @@ services:
       - "5432:5432"
 ```
 
-Then set `DATABASE_URL=postgresql://earnings:earnings@localhost:5432/earnings_lens` in `.env`.
+Then set in `.env`:
+
+```env
+DATABASE_URL=postgresql://earnings:earnings@localhost:5432/earnings_lens
+```
 
 ---
 
-## Adding more transcript sources
+## Extending the scraper
 
-`services/scraper.py` exposes a `fetch_by_ticker()` stub. Implement it to
-automatically resolve transcript URLs from a search index or paid data provider,
-then call `fetch_motley_fool_transcript()` (or a new site-specific parser) with
-the resolved URL.
+`services/scraper.py` exposes a `fetch_by_ticker()` stub. Implement it to automatically resolve transcript URLs from a search index or paid data provider, then pass the resolved URL to `fetch_motley_fool_transcript()` (or a new site-specific parser).
 
 ---
 
